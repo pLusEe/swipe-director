@@ -1,0 +1,13 @@
+.DS_Store
+node_modules/
+screenshots/
+test-results/
+playwright-report/
+generated-keyframes/
+.env
+.env.*
+*.log
+*-notes.md
+original-story-crate-brief.md
+shot-studio.spec.js
+qa.spec.js
