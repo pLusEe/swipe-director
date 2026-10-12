@@ -476,6 +476,10 @@ const initialState = () => ({
   keyframeSelections: [],
   keyframeIndexes: [],
   activeKeyframe: 0,
+  sequenceComposition: null,
+  sequenceReplacement: null,
+  sequenceTime: 0,
+  sequenceToolsOpen: false,
   activeStep: 0,
   treatmentIndexes: [],
   selections: [],
@@ -653,6 +657,7 @@ function render() {
     storymap: renderStoryMap,
     preparing: renderPreparing,
     director: renderDirector,
+    sequence: renderShotSequence,
     review: renderReview,
     generating: renderGenerating,
     result: renderResult
@@ -671,21 +676,15 @@ function render() {
   if (state.view === "storymap") bindStoryMap();
   if (state.view === "preparing") startPreparing();
   if (state.view === "director") bindDirector();
+  if (state.view === "sequence") bindShotSequence();
   if (state.view === "review") bindReview();
   if (state.view === "generating") startGeneration();
   if (state.view === "result") bindResult();
   saveState();
+  window.swipeGuide?.update();
 }
 
 function renderHome() {
-  const inspiration = [
-    ["assets/shot-01-c.jpg", "0:18"],
-    ["assets/shot-02-f.jpg", "0:12"],
-    ["assets/shot-03-c.jpg", "0:15"],
-    ["assets/shot-04-e.jpg", "0:09"],
-    ["assets/shot-01-f.jpg", "0:21"],
-    ["assets/shot-04-c.jpg", "0:14"]
-  ];
   return `
     <section class="screen lab-home screen-enter" aria-labelledby="lab-home-title">
       ${statusBar()}
@@ -697,15 +696,11 @@ function renderHome() {
       </div>
 
       <div class="lab-scroll">
-        <h1 id="lab-home-title">What are we creating today?</h1>
+        <h1 id="lab-home-title">What are we creating<br>today?</h1>
 
         <section class="lab-inspiration" aria-label="Viral content inspiration">
           <div class="lab-inspiration-strip">
-            ${inspiration.map(([src, duration], index) => `
-              <div class="lab-inspiration-item">
-                ${generatedImage(src, `AI video inspiration ${index + 1}`, index < 3)}
-                <span>${duration}</span>
-              </div>`).join("")}
+            <img class="lab-native-inspiration" src="assets/capcut/remix-viral-native.png" alt="CapCut recommendations: B.Duck, animated characters, snowboarding, brain freeze and LEGO airport">
           </div>
           <button type="button" data-toast="Viral remix opened">
             <span>Remix viral content</span>${icon("chevron-right")}
@@ -732,7 +727,6 @@ function renderHome() {
           </button>
         </div>
 
-        ${state.projectStarted ? renderActiveProject() : ""}
       </div>
 
       <form class="lab-composer" id="lab-composer">
@@ -810,15 +804,16 @@ function renderSetup() {
         <div class="ai-video-scroll">
           <h1 class="ai-video-title" id="setup-title">
             <span class="ai-video-step-label">STEP 1</span>
-            <span class="ai-video-title-line">Generate keyframes with</span>
+            <span class="ai-video-title-line">Generate shots with</span>
             <span class="ai-video-product-label">Swipe Director</span>
           </h1>
 
-          <section class="ai-video-composer" aria-label="Story keyframe prompt">
-            <button class="ai-video-mode" type="button" data-toast="Keyframes" aria-label="Keyframe generation mode">
+          <section class="ai-video-composer" aria-label="Story shot prompt">
+            <button class="ai-video-mode" type="button" data-toast="Shots" aria-label="Shot generation mode">
               AI video
               <span aria-hidden="true">${icon("chevron-up")}${icon("chevron-down")}</span>
             </button>
+            <button class="ai-video-fill-example" id="fill-outsider-example" type="button">填入示例</button>
 
             ${state.referenceAttached ? `
               <div class="ai-video-reference">
@@ -833,10 +828,10 @@ function renderSetup() {
               id="seed-input"
               name="story"
               maxlength="4000"
-              aria-label="Scene and keyframe descriptions"
+              aria-label="Scene and shot descriptions"
               spellcheck="false"
               autocomplete="off"
-              placeholder="Describe your scene and each keyframe"
+              placeholder="Describe your scene and each shot"
             >${escapeHtml(state.seed)}</textarea>
 
             <div class="ai-video-composer-actions">
@@ -852,7 +847,7 @@ function renderSetup() {
             </div>
           </section>
 
-          <section class="ai-video-settings" aria-label="Keyframe generation settings">
+          <section class="ai-video-settings" aria-label="Shot generation settings">
             <div class="ai-video-settings-scroll">
               <h2>Image model</h2>
               <p id="image-model-summary">${selectedModel.summary}</p>
@@ -880,16 +875,16 @@ function renderSetup() {
 
               <div class="ai-video-keyframes-control">
                 <label for="keyframes-range">
-                  <span>Keyframes</span>
+                  <span>Shots</span>
                   <output id="keyframes-output" for="keyframes-range">${state.keyframeCount}</output>
                   <small id="derived-shot-count">Creates ${generatedShotLabel}</small>
                 </label>
-                <input id="keyframes-range" type="range" min="2" max="12" step="1" value="${state.keyframeCount}" style="--range-progress:${keyframeProgress}%" aria-label="Number of keyframes" aria-valuetext="${state.keyframeCount} keyframes, creates ${generatedShotLabel}">
+                <input id="keyframes-range" type="range" min="2" max="12" step="1" value="${state.keyframeCount}" style="--range-progress:${keyframeProgress}%" aria-label="Number of shots" aria-valuetext="${state.keyframeCount} shots">
                 <div class="ai-video-keyframe-ticks" aria-hidden="true"><span>2</span><span>12</span></div>
               </div>
 
-              <h2 class="ai-video-setting-title">Images per keyframe</h2>
-              <div class="ai-video-setting-options setup-candidate-count" role="group" aria-label="Images per keyframe">
+              <h2 class="ai-video-setting-title">Images per shot</h2>
+              <div class="ai-video-setting-options setup-candidate-count" role="group" aria-label="Images per shot">
                 ${[1,2,3,4].map(count=>`<button type="button" data-candidate-count="${count}" aria-pressed="${state.candidatesPerKeyframe === count}">${count}</button>`).join("")}
               </div>
               <p id="setup-generation-total">${setupGenerationTotal()}</p>
@@ -1274,7 +1269,10 @@ function bindHome() {
     saveState();
   });
 
-  $("#start-swipe-director")?.addEventListener("click", () => beginNewProject());
+  $("#start-swipe-director")?.addEventListener("click", () => {
+    beginNewProject();
+    window.swipeGuide?.event("entered");
+  });
 
   $("#lab-composer")?.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -1305,6 +1303,15 @@ function beginNewProject(prompt = "") {
 }
 
 function bindSetup() {
+  const resizeScenePrompt = () => {
+    const input = $("#seed-input");
+    if (!input) return;
+    input.style.height = "0px";
+    const height = Math.max(63, Math.min(84, input.scrollHeight));
+    input.style.height = `${height}px`;
+    input.closest(".ai-video-composer").style.setProperty("--scene-prompt-height", `${height}px`);
+  };
+  resizeScenePrompt();
   const updateGenerationSettings = () => {
     $("#setup-video-model").hidden = state.generationType !== "video";
     $("#setup-generation-total").textContent = setupGenerationTotal();
@@ -1333,10 +1340,29 @@ function bindSetup() {
 
   $("#seed-input")?.addEventListener("input", (event) => {
     state.seed = event.target.value;
+    resizeScenePrompt();
     const generateButton = $("#create-story-map");
     const isEmpty = !state.seed.trim();
     generateButton?.classList.toggle("is-empty", isEmpty);
     saveState();
+  });
+  $("#fill-outsider-example")?.addEventListener("click", () => {
+    const scenes = [
+      OUTSIDER_IMAGE_PROMPTS[0][0],
+      OUTSIDER_IMAGE_PROMPTS[1][0],
+      OUTSIDER_IMAGE_PROMPTS[2][0],
+      OUTSIDER_IMAGE_PROMPTS[3][0],
+      "海边礁石旁，两名男子在正午烈日下对峙。突出人物动作、手部细节与刺眼反光，白沙、深色岩壁和蓝海保持连续，气氛紧张而克制。写实油画，厚涂笔触，1:1 构图。",
+      "延续海滩对峙场景，聚焦冲突后的凝滞瞬间与人物反应。保持黑色短卷发男子的浅灰米色短袖衬衫、海边礁石、白沙和正午硬光一致。疏离而压抑的写实油画，厚涂笔触，1:1 构图。"
+    ];
+    state.seed = "《局外人》海滩场景。统一采用低饱和写实油画、厚涂笔触与刺眼正午硬光。主角为黑色短卷发、面容瘦削的成年男子，穿浅灰米色短袖衬衫与浅色长裤；保持跨镜头角色和环境一致。为每个镜头提供四种构图候选。\n\n" +
+      scenes.map((scene, index) => `Shot ${index + 1}: ${scene}`).join("\n\n");
+    state.keyframeCount = 6;
+    state.candidatesPerKeyframe = 4;
+    state.ratio = "1:1";
+    state.generationType = "image";
+    render();
+    window.swipeGuide?.event("example");
   });
 
   $("#seed-input")?.addEventListener("keydown", (event) => {
@@ -1413,7 +1439,7 @@ function bindSetup() {
     const generatedShotLabel = `${generatedShotCount} ${generatedShotCount === 1 ? "shot" : "shots"}`;
     state.duration = generatedShotCount * 5;
     range.style.setProperty("--range-progress", `${((state.keyframeCount - 2) / 10) * 100}%`);
-    range.setAttribute("aria-valuetext", `${state.keyframeCount} keyframes, creates ${generatedShotLabel}`);
+    range.setAttribute("aria-valuetext", `${state.keyframeCount} shots`);
     const output = $("#keyframes-output");
     const derivedShotCount = $("#derived-shot-count");
     if (output) output.value = String(state.keyframeCount);
@@ -1447,7 +1473,7 @@ function bindSetup() {
     if ($("#keyframe-loading")) return;
     if (!state.seed.trim()) {
       $("#seed-input")?.focus();
-      showToast("Describe your scene and keyframes first");
+      showToast("Describe your scene and shots first");
       return;
     }
     state.storyPlan = buildStoryPlan(5);
@@ -1476,8 +1502,8 @@ async function showKeyframeLoading() {
   overlay.id = "keyframe-loading";
   overlay.className = "keyframe-loading";
   overlay.setAttribute("role", "status");
-  overlay.setAttribute("aria-label", state.generationType === "video" ? "Preparing images and videos" : "Preparing keyframes");
-  overlay.innerHTML = `<div class="keyframe-loading-tile">${capcutLoadingMark()}</div><span class="frame-sr-only">${state.generationType === "video" ? "Preparing images and videos…" : "Preparing keyframes…"}</span>`;
+  overlay.setAttribute("aria-label", state.generationType === "video" ? "Preparing images and videos" : "Preparing shots");
+  overlay.innerHTML = `<div class="keyframe-loading-tile">${capcutLoadingMark()}</div><span class="frame-sr-only">${state.generationType === "video" ? "Preparing images and videos…" : "Preparing shots…"}</span>`;
   setup.append(overlay);
   $("#story-form").inert = true;
   $("#create-story-map").disabled = true;
@@ -1918,7 +1944,7 @@ function shotCountFromKeyframes(count) {
 
 function setupGenerationTotal() {
   const total = state.keyframeCount * state.candidatesPerKeyframe;
-  return `${total} ${total === 1 ? "image" : "images"}${state.generationType === "video" ? ` + ${total} videos` : ""} · choose 1 per keyframe`;
+  return `${total} ${total === 1 ? "image" : "images"}${state.generationType === "video" ? ` + ${total} videos` : ""} · choose 1 per shot`;
 }
 
 function buildDirectorShots() {
@@ -2023,6 +2049,7 @@ document.addEventListener("visibilitychange", () => {
 $("#reset-demo").addEventListener("click", () => {
   localStorage.removeItem(STORAGE_KEY);
   state = initialState();
+  window.swipeGuide?.event("reset");
   render();
   showToast("Demo reset");
 });

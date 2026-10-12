@@ -72,7 +72,7 @@ function ensureKeyframeState() {
 }
 
 function keyframePromptForIndex(index) {
-  const matches = [...state.seed.matchAll(/(?:^|[\n;；])\s*(?:K|Keyframe\s*|第\s*)(\d+)\s*(?:个?(?:关键帧|镜头))?\s*[:：]\s*([\s\S]*?)(?=(?:[\n;；]\s*(?:K|Keyframe\s*|第\s*)\d+)|$)/gi)];
+  const matches = [...state.seed.matchAll(/(?:^|[\n;；])\s*(?:K|Keyframe\s*|Shot\s*|第\s*)(\d+)\s*(?:个?(?:关键帧|镜头))?\s*[:：]\s*([\s\S]*?)(?=(?:[\n;；]\s*(?:K|Keyframe\s*|Shot\s*|第\s*)\d+)|$)/gi)];
   return matches.find(match => Number(match[1]) === index + 1)?.[2].trim() || "";
 }
 
@@ -113,23 +113,23 @@ function renderKeyframeDirector() {
       ${statusBar()}
       <header class="app-header creator-header director-workbench-header">
         <button class="header-action" id="director-back" type="button" aria-label="Back to story input">${capcutIcon("nav-back")}</button>
-        <h2 id="director-title">Choose your keyframes<span>STEP 2 · ${chosen}/${state.keyframeCount} chosen · ${state.shotPlan.length} shots</span></h2>
+        <h2 id="director-title">Choose your shots<span>STEP 2 · ${chosen}/${state.keyframeCount} chosen</span></h2>
       </header>
-      <nav class="v32-story-rail director-shot-rail keyframe-rail" aria-label="Keyframe progress">
+      <nav class="v32-story-rail director-shot-rail keyframe-rail" aria-label="Shot progress">
         ${state.keyframePlan.map((item, frameIndex) => {
           const selected = state.keyframeSelections[frameIndex];
           const preview = item.candidates[0];
-          return `<button type="button" class="v32-rail-item ${selected ? "is-selected" : ""}" data-keyframe="${frameIndex}" aria-label="${item.id}, ${selected ? "chosen" : "not chosen"}" aria-current="${frameIndex === index ? "step" : "false"}">
+          return `<button type="button" class="v32-rail-item ${selected ? "is-selected" : ""}" data-keyframe="${frameIndex}" aria-label="Shot ${frameIndex + 1}, ${selected ? "chosen" : "not chosen"}" aria-current="${frameIndex === index ? "step" : "false"}">
             ${generatedImage(selected?.source || candidateImage(preview), "", true, selected?.style || candidateStyle(preview))}
-            <span>${item.id}</span>
+            <span>Shot ${frameIndex + 1}</span>
             ${selected ? `<i>${icon("check")}</i>` : ""}
           </button>`;
         }).join("")}
       </nav>
-      ${state.keyframeExportReady ? `<div class="frame-chain-ready"><span>Keyframe chain ready · video generation needed</span><button id="export-keyframe-chain" type="button">Export chain</button></div>` : ""}
+      ${state.keyframeExportReady ? `<div class="frame-chain-ready"><span>Shot chain ready · video generation needed</span><button id="export-keyframe-chain" type="button">Export chain</button></div>` : ""}
       <div class="director-body director-swipe-body keyframe-body">
         <div class="candidate-stage">
-          <article id="candidate-card" class="candidate-card candidate-card--depth-0 keyframe-card ${back ? "is-flipped" : ""}" aria-label="${frame.id}, candidate ${candidateIndex + 1}">
+          <article id="candidate-card" class="candidate-card candidate-card--depth-0 keyframe-card ${back ? "is-flipped" : ""}" aria-label="Shot ${index + 1}, candidate ${candidateIndex + 1}">
             <div class="keyframe-turn">
               <div class="keyframe-front" ${back ? 'inert aria-hidden="true"' : ""}>
                 <button type="button" class="keyframe-flip-hit" id="flip-card" aria-label="Flip card to edit prompt" aria-describedby="keyframe-gesture-help">
@@ -138,12 +138,12 @@ function renderKeyframeDirector() {
                   <span class="keyframe-front-caption">${frame.title}<small>${icon("pencil")} Tap to refine</small></span>
                 </button>
               </div>
-              <section class="keyframe-back" aria-label="Refine this keyframe" ${back ? "" : 'inert aria-hidden="true"'}>
-                <header class="keyframe-back-header"><div><small>${frame.id} · Option ${candidateIndex + 1}</small><h3>Refine this frame</h3></div>
+              <section class="keyframe-back" aria-label="Refine this shot" ${back ? "" : 'inert aria-hidden="true"'}>
+                <header class="keyframe-back-header"><div><small>Shot ${index + 1} · Option ${candidateIndex + 1}</small><h3>Refine this frame</h3></div>
                   <button type="button" id="flip-back" aria-label="Back to image">${icon("x")}</button>
                 </header>
                 <nav class="keyframe-tools" aria-label="Refinement tools">
-                  ${[["prompt", "Prompt"], ["region", "Retouch"]].map(([tool, label]) => `<button type="button" data-frame-tool="${tool}" aria-pressed="${keyframeTool === tool}">${label}</button>`).join("")}
+                  ${[["prompt", "Prompt"], ["region", "Edit area"]].map(([tool, label]) => `<button type="button" data-frame-tool="${tool}" aria-pressed="${keyframeTool === tool}">${label}</button>`).join("")}
                 </nav>
                 <div class="keyframe-editor-scroll">${renderKeyframeTool(candidate, frame)}</div>
               </section>
@@ -173,7 +173,7 @@ function renderKeyframeTool(candidate, frame) {
       <div class="frame-region-modes">${[["replace", "Replace"], ["remove", "Remove"]].map(([mode, label]) => `<button type="button" data-region-mode="${mode}" aria-pressed="${candidate.mode === mode}">${label}</button>`).join("")}</div>
       <label for="frame-region-prompt">Change this area</label>
       <textarea id="frame-region-prompt" rows="2" placeholder="Describe the replacement, or choose Remove">${escapeHtml(candidate.change)}</textarea>
-      <button class="frame-primary" type="submit">Save retouch request ${icon("arrow-right")}</button>
+      <button class="frame-primary" type="submit">Generate ${icon("arrow-right")}</button>
       ${renderFrameRequest(candidate)}
     </form>`;
   }
@@ -230,7 +230,7 @@ function bindKeyframeDirector() {
   $("#export-keyframe-chain")?.addEventListener("click", () => downloadFrameJson({
     keyframes: state.keyframeSelections,
     shots: state.shotPlan.map((shot) => ({ startKey: shot.startKey, endKey: shot.endKey, startFrame: shot.startFrame, endFrame: shot.endFrame, startStyle: shot.startStyle, endStyle: shot.endStyle, status: "needs_video_generation" }))
-  }, "keyframe-chain.json"));
+  }, "shot-chain.json"));
   bindFrameEditor(candidate);
   bindKeyframeSwipe();
 }
@@ -248,7 +248,8 @@ function bindFrameEditor(candidate) {
   }
   $("#frame-prompt-form")?.addEventListener("submit", (event) => {
     event.preventDefault();
-    saveFrameEditRequest(false);
+    if ($(".shot-studio")) regenerateShotImage();
+    else saveFrameEditRequest(false);
   });
   $("#frame-region-form")?.addEventListener("submit", (event) => {
     event.preventDefault();

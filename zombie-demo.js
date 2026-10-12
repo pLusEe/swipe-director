@@ -1,5 +1,6 @@
 const DEMO_MEDIA_VERSION = "outsider-user-images-1";
-const DEMO_HAS_VIDEO = false;
+const DEMO_HAS_VIDEO = true;
+const OUTSIDER_VIDEO_DURATIONS = [12.064, 10.048, 6.048, 4.064, 4.064, 4.064];
 const OUTSIDER_IMAGE_PROMPTS = [
   [
     "烈日下的白色沙滩，一名黑色短卷发、面容瘦削的成年男子穿浅灰米色短袖衬衫与浅色长裤，侧身向右行走，抬手遮住额头，神情疲惫而紧绷。人物位于左侧，腰部以上的中景构图，远处深蓝海面与浅色天空形成平直地平线。正午硬光，高亮沙地，低饱和写实油画风格，厚涂笔触，1:1 构图。",

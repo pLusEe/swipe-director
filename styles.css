@@ -1522,10 +1522,12 @@ img {
 
 .lab-scroll > h1 {
   margin: 24px 15px 12px;
+  font-family: "Roboto Flex", "Helvetica Neue", sans-serif;
+  font-synthesis: none;
   font-size: 27px;
   line-height: 1.16;
-  font-weight: 680;
-  text-wrap: balance;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .lab-inspiration {
@@ -1626,8 +1628,10 @@ img {
 }
 
 .lab-actions span {
+  font-family: "Roboto Flex", "Helvetica Neue", sans-serif;
+  font-synthesis: none;
   font-size: 14px;
-  font-weight: 560;
+  font-weight: 400;
 }
 
 .lab-actions small {

@@ -1,0 +1,116 @@
+.prototype-stage {
+  position: relative;
+  grid-template-columns: minmax(0, auto) 320px;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  justify-content: center;
+  column-gap: 64px;
+}
+.prototype-meta { grid-column: 1; grid-row: 1; }
+.device { grid-column: 1; grid-row: 2; }
+.prototype-reset { grid-column: 1; grid-row: 3; }
+.swipe-guide {
+  --guide-muted: #a2a9b2;
+  grid-column: 2;
+  grid-row: 2;
+  align-self: center;
+  width: 320px;
+  padding: 22px;
+  border: 1px solid #292d32;
+  border-radius: 16px;
+  background: #121519;
+  color: #f4f6f8;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.guide-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 22px; }
+.guide-heading-main { min-width: 0; display: flex; align-items: center; }
+.guide-heading-main > span { color: var(--guide-muted); font-size: 12px; line-height: 18px; }
+.swipe-guide button { min-height: 44px; color: var(--guide-muted); background: transparent; font-size: 12px; padding: 0; }
+.swipe-guide button:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 3px; }
+.swipe-guide button:active { opacity: .75; }
+.swipe-guide .guide-back { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; color: #e8edf2; }
+.guide-back [aria-hidden="true"] { color: var(--guide-muted); font-size: 16px; line-height: 1; transform: translateY(-1px); }
+.guide-progress { display: flex; justify-content: space-between; font-size: 11px; color: var(--guide-muted); font-variant-numeric: tabular-nums; }
+.guide-progress-track { height: 2px; margin-top: 8px; margin-bottom: 22px; background: #2b3037; border-radius: 2px; overflow: hidden; }
+.guide-progress-track i { display: block; height: 100%; background: var(--accent); }
+.swipe-guide h2 { font-size: 18px; font-weight: 600; line-height: 1.35; margin: 0 0 8px; }
+.guide-description { font-size: 13px; line-height: 1.65; color: var(--guide-muted); margin: 0; }
+.guide-action { display: flex; align-items: center; gap: 10px; margin-top: 18px; padding: 12px 0; border-top: 1px solid #292d32; color: #e8edf2; font-size: 13px; line-height: 1.5; }
+.guide-count { font-size: 12px; color: var(--accent); margin: 8px 0 0; }
+.guide-footer { display: flex; align-items: center; justify-content: flex-start; gap: 18px; margin-top: 12px; flex-wrap: wrap; }
+.guide-footer button:last-child[data-guide="skip"] { color: #e8edf2; }
+.guide-gesture { display: flex; align-items: center; justify-content: center; gap: 4px; flex: 0 0 48px; color: var(--accent); font-size: 17px; }
+.guide-gesture i { width: 12px; height: 18px; border: 1px solid currentColor; border-radius: 5px; animation: guide-slide 1.6s ease-in-out 3; }
+.guide-gesture.is-up { flex-direction: column; gap: 2px; flex-basis: 28px; }
+.guide-gesture.is-up i { animation-name: guide-up; }
+.guide-focus {
+  position: absolute;
+  z-index: 115;
+  pointer-events: none;
+  background: rgba(0, 229, 229, .2);
+}
+.guide-focus.is-click { animation: guide-focus-breathe 2.4s ease-in-out infinite; }
+.guide-focus.is-gesture { background: transparent; opacity: 0; animation: none; }
+.guide-focus.is-breathing { animation: guide-breathe 820ms ease-in-out 2; }
+.guide-focus[hidden] { display: none; }
+.guide-gesture-coach {
+  position: fixed;
+  z-index: 116;
+  width: 106px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border: 1px solid #30353c;
+  border-radius: 8px;
+  background: #171a1f;
+  color: #eef2f5;
+  pointer-events: none;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.guide-gesture-coach[hidden] { display: none; }
+.guide-gesture-coach::after {
+  content: "";
+  position: absolute;
+  left: 100%;
+  top: calc(50% - .5px);
+  width: 16px;
+  height: 1px;
+  background: #59616b;
+}
+.guide-gesture-coach-icon {
+  flex: 0 0 24px;
+  color: var(--accent);
+  font-size: 20px;
+  line-height: 1;
+  text-align: center;
+}
+.guide-gesture-coach.is-horizontal .guide-gesture-coach-icon { animation: guide-coach-horizontal 1.6s ease-in-out infinite; }
+.guide-gesture-coach.is-up .guide-gesture-coach-icon { animation: guide-coach-up 1.4s ease-in-out infinite; }
+.guide-gesture-coach.is-replaying .guide-gesture-coach-icon { animation-duration: .7s; }
+@keyframes guide-focus-breathe { 0%,100%{opacity:.28} 50%{opacity:.64} }
+@keyframes guide-breathe { 0%,100%{opacity:.22} 50%{opacity:.82} }
+@keyframes guide-coach-horizontal { 0%,100%{transform:translateX(-2px)} 50%{transform:translateX(3px)} }
+@keyframes guide-coach-up { 0%,100%{transform:translateY(2px)} 50%{transform:translateY(-3px)} }
+@keyframes guide-slide { 0%, 100% { transform: translateX(0); } 30% { transform: translateX(-5px); } 70% { transform: translateX(5px); } }
+@keyframes guide-up { 0%, 100% { transform: translateY(0); } 60% { transform: translateY(-6px); } }
+@media (hover: hover) and (pointer: fine) { .swipe-guide button:hover { color: #fff; } }
+@media (min-width: 761px) and (max-height: 760px) {
+  .prototype-stage { display: grid; padding: 14px 24px; grid-template-rows: auto minmax(0, 1fr) auto; gap: 10px 48px; }
+  .prototype-meta, .prototype-reset { display: initial; }
+  .prototype-reset { display: inline-flex; }
+  .device { width: min(390px, calc((100dvh - 110px) * .45)); height: auto; aspect-ratio: 390 / 867; border: 1px solid #292d32; border-radius: var(--radius-device); }
+  .swipe-guide { max-height: calc(100dvh - 40px); overflow-y: auto; }
+}
+@media (max-width: 760px) {
+  .prototype-stage { display: grid; grid-template-columns: 1fr; column-gap: 0; }
+  .swipe-guide, .guide-focus, .guide-gesture-coach { display: none; }
+}
+@media (max-width: 560px) {
+  .prototype-stage { display: block; padding: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .guide-focus, .guide-gesture i, .guide-gesture-coach-icon { animation: none !important; transition: none !important; }
+  .guide-focus.is-click { opacity:.48; }
+}
